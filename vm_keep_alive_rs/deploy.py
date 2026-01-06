@@ -13,7 +13,6 @@ RUST_PROJECT_DIR = "."
 BINARY_NAME = "vm_keep_alive_rs"
 REMOTE_DIR = "/opt/vm_keep_alive"
 REMOTE_BINARY_PATH = f"{REMOTE_DIR}/{BINARY_NAME}"
-REMOTE_SECRETS_PATH = f"{REMOTE_DIR}/secrets.json"
 SERVICE_NAME = "vm_keep_alive.service"
 
 def load_config():
@@ -102,12 +101,6 @@ def main():
     # 3. Upload Binary
     scp_file(host, user, binary_local_path, REMOTE_BINARY_PATH, sudo=True)
     run_remote(host, user, f"chmod 755 {REMOTE_BINARY_PATH}", sudo=True)
-
-    # 4. Upload Secrets
-    # We upload the SAME secrets file we read config from
-    secrets_local_path = SECRETS_FILE if os.path.exists(SECRETS_FILE) else DEMO_SECRETS_FILE
-    scp_file(host, user, secrets_local_path, REMOTE_SECRETS_PATH, sudo=True)
-    run_remote(host, user, f"chmod 600 {REMOTE_SECRETS_PATH}", sudo=True)
 
     # 5. Service Configuration
     service_file, service_user = prepare_service_file(user)

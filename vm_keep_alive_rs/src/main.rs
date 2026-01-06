@@ -1,14 +1,10 @@
 use regex::Regex;
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::fs;
-use std::path::PathBuf;
 use std::process::Command;
 
 // --- Configuration ---
-// For embedded secrets, you could use:
-// const SECRETS_JSON: &str = include_str!("../../secrets.json");
-// and then parse this string instead of reading a file.
+const SECRETS_JSON: &str = include_str!("../secrets.json");
 
 const TARGET_PREFIX: &str = "win";
 const TARGET_RANGE_START: u32 = 201;
@@ -21,26 +17,11 @@ struct Secrets {
     esxi_password: String,
 }
 
-fn get_secret_file_path() -> PathBuf {
-    PathBuf::from("/opt/vm_keep_alive/secrets.json")
-}
-
 fn load_secrets() -> Option<Secrets> {
-    let path = get_secret_file_path();
-    
-    // To use embedded secrets instead:
-    // return serde_json::from_str(SECRETS_JSON).ok();
-
-    match fs::read_to_string(&path) {
-        Ok(content) => match serde_json::from_str(&content) {
-            Ok(secrets) => Some(secrets),
-            Err(e) => {
-                eprintln!("[-] Error parsing secrets json: {}", e);
-                None
-            }
-        },
+    match serde_json::from_str(SECRETS_JSON) {
+        Ok(secrets) => Some(secrets),
         Err(e) => {
-            eprintln!("[-] Error reading secrets file {:?}: {}", path, e);
+            eprintln!("[-] Error parsing embedded secrets: {}", e);
             None
         }
     }
