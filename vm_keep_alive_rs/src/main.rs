@@ -29,7 +29,7 @@ fn load_secrets() -> Option<Secrets> {
 
 fn ssh_exec(command: &str, secrets: &Secrets) -> Option<String> {
     let target = format!("{}@{}", secrets.esxi_user, secrets.esxi_host);
-    
+
     let output = Command::new("sshpass")
         .arg("-p")
         .arg(&secrets.esxi_password)
@@ -68,7 +68,7 @@ fn get_vms(secrets: &Secrets) -> HashMap<String, String> {
     };
 
     let mut vms = HashMap::new();
-    
+
     for line in raw_output.lines() {
         // Skip header lines or empty lines essentially by checking if first token is digit
         let parts: Vec<&str> = line.split_whitespace().collect();
@@ -90,11 +90,11 @@ fn is_target_vm(name: &str) -> bool {
     }
 
     // Regex to match TARGET_PREFIX followed by digits
-    // We construct regex once to avoid overhead if we were calling this in a tight loop, 
+    // We construct regex once to avoid overhead if we were calling this in a tight loop,
     // but here it's fine.
     let re_str = format!(r"{}(\d+)", TARGET_PREFIX);
     let re = Regex::new(&re_str).unwrap();
-    
+
     if let Some(caps) = re.captures(&name_lower) {
         if let Some(num_match) = caps.get(1) {
             if let Ok(num) = num_match.as_str().parse::<u32>() {
@@ -114,7 +114,10 @@ fn check_and_start() {
         None => return,
     };
 
-    println!("--- Run: {} ---", chrono::Local::now().format("%Y-%m-%d %H:%M:%S"));
+    println!(
+        "--- Run: {} ---",
+        chrono::Local::now().format("%Y-%m-%d %H:%M:%S")
+    );
 
     let vms = get_vms(&secrets);
 
