@@ -22,8 +22,7 @@ struct Secrets {
 }
 
 fn get_secret_file_path() -> PathBuf {
-    let home = std::env::var("HOME").expect("Could not find HOME directory");
-    PathBuf::from(home).join("scripts/secrets.json")
+    PathBuf::from("/opt/vm_keep_alive/secrets.json")
 }
 
 fn load_secrets() -> Option<Secrets> {

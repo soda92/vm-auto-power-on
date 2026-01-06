@@ -1,0 +1,17 @@
+[Unit]
+Description=VM Auto Power On Service
+After=network.target
+
+[Service]
+Type=simple
+# User will be replaced by the deploy script
+User={{USER}}
+ExecStart=/opt/vm_keep_alive/vm_keep_alive_rs
+Restart=always
+RestartSec=60
+# Ensure logs are visible
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
