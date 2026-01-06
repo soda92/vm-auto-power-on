@@ -8,7 +8,7 @@ Type=simple
 User={{USER}}
 ExecStart=/opt/vm_keep_alive/vm_keep_alive_rs
 Restart=always
-RestartSec=60
+RestartSec=5
 # Ensure logs are visible
 StandardOutput=journal
 StandardError=journal

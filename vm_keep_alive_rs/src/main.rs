@@ -2,6 +2,8 @@ use regex::Regex;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::process::Command;
+use std::thread;
+use std::time::Duration;
 
 // --- Configuration ---
 const SECRETS_JSON: &str = include_str!("../secrets.json");
@@ -136,5 +138,12 @@ fn check_and_start() {
 }
 
 fn main() {
-    check_and_start();
+    println!("[*] VM Keep Alive Daemon started.");
+
+    loop {
+        check_and_start();
+
+        // Wait 60 seconds before the next check
+        thread::sleep(Duration::from_secs(60));
+    }
 }
