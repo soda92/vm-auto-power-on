@@ -8,7 +8,7 @@ use std::time::Duration;
 // --- Configuration ---
 const SECRETS_JSON: &str = include_str!("../secrets.json");
 
-const TARGET_PREFIX: &str = "win";
+const TARGET_PREFIX: &str = "win-";
 const TARGET_RANGE_START: u32 = 201;
 const TARGET_RANGE_END: u32 = 226;
 

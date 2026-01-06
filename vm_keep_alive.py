@@ -10,7 +10,7 @@ import datetime
 SECRET_FILE = os.path.expanduser("~/scripts/secrets.json")
 
 # Target Range: win201 to win226
-TARGET_PREFIX = "win"
+TARGET_PREFIX = "win-"
 TARGET_RANGE = (201, 226)
 
 
