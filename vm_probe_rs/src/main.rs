@@ -153,12 +153,12 @@ async fn probe_and_list_vms(host: &str, user: &str, pass: &str) -> Result<()> {
 
         let (power_state_str, is_powered_off) = match runtime {
             Ok(r) => match r.power_state {
-                VirtualMachinePowerStateEnum::PoweredOn => ("PoweredOn", false),
-                VirtualMachinePowerStateEnum::PoweredOff => ("PoweredOff", true),
-                VirtualMachinePowerStateEnum::Suspended => ("Suspended", false),
-                VirtualMachinePowerStateEnum::Other_(ref s) => (s.as_str(), false),
+                VirtualMachinePowerStateEnum::PoweredOn => ("PoweredOn".to_string(), false),
+                VirtualMachinePowerStateEnum::PoweredOff => ("PoweredOff".to_string(), true),
+                VirtualMachinePowerStateEnum::Suspended => ("Suspended".to_string(), false),
+                VirtualMachinePowerStateEnum::Other_(s) => (s, false),
             },
-            Err(e) => ("<error>", false),
+            Err(_) => ("<error>".to_string(), false),
         };
 
         let target = is_target_vm(&name);
@@ -203,4 +203,20 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_target_vm() {
+        assert!(is_target_vm("win-201"));
+        assert!(is_target_vm("win-214"));
+        assert!(is_target_vm("win-226"));
+
+        assert!(!is_target_vm("win-214 [maintenance]"));
+        assert!(!is_target_vm("win-205 maintenance"));
+        assert!(!is_target_vm("win-100"));
+        assert!(!is_target_vm("ubuntu-201"));
+    }
+}
 
