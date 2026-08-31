@@ -63,25 +63,30 @@ fn ssh_exec(command: &str, secrets: &Secrets) -> Option<String> {
     }
 }
 
+fn parse_vms_output(raw_output: &str) -> HashMap<String, String> {
+    // Matches: <vmid> <vm_name> [<datastore>] <file>.vmx ...
+    // Note that VM names may contain brackets (e.g. `[maintenance]`). The File column is identified
+    // by the datastore bracket followed by the path ending in .vmx.
+    let re = Regex::new(r"^\s*(\d+)\s+(.+?)\s+\[([^\]]+)\]\s+\S+\.vmx").unwrap();
+    let mut vms = HashMap::new();
+
+    for line in raw_output.lines() {
+        if let Some(caps) = re.captures(line) {
+            if let (Some(vmid), Some(name)) = (caps.get(1), caps.get(2)) {
+                vms.insert(vmid.as_str().to_string(), name.as_str().trim().to_string());
+            }
+        }
+    }
+    vms
+}
+
 fn get_vms(secrets: &Secrets) -> HashMap<String, String> {
     let raw_output = match ssh_exec("vim-cmd vmsvc/getallvms", secrets) {
         Some(output) => output,
         None => return HashMap::new(),
     };
 
-    let mut vms = HashMap::new();
-
-    for line in raw_output.lines() {
-        // Skip header lines or empty lines essentially by checking if first token is digit
-        let parts: Vec<&str> = line.split_whitespace().collect();
-        if parts.len() > 1 {
-            if let Ok(_) = parts[0].parse::<u32>() {
-                // parts[0] is ID, parts[1] is Name
-                vms.insert(parts[0].to_string(), parts[1].to_string());
-            }
-        }
-    }
-    vms
+    parse_vms_output(&raw_output)
 }
 
 fn is_target_vm(name: &str) -> bool {
@@ -92,8 +97,6 @@ fn is_target_vm(name: &str) -> bool {
     }
 
     // Regex to match TARGET_PREFIX followed by digits
-    // We construct regex once to avoid overhead if we were calling this in a tight loop,
-    // but here it's fine.
     let re_str = format!(r"{}(\d+)", TARGET_PREFIX);
     let re = Regex::new(&re_str).unwrap();
 
@@ -147,3 +150,42 @@ fn main() {
         thread::sleep(Duration::from_secs(60));
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_vms_output_with_spaces_and_brackets() {
+        let sample_output = r#"
+Vmid   Name                                        File                                                                   Guest OS          Version   Annotation
+18     win-214 [maintenance]                       [datastore1] win-214/win-214.vmx                                       windows9_64Guest  vmx-19    
+22     win-205                                     [datastore1] win-205/win-205.vmx                                       windows9_64Guest  vmx-19    
+30     test-server-01                              [ssd_store] test-server/test.vmx                                       ubuntu64Guest     vmx-17    
+"#;
+        let vms = parse_vms_output(sample_output);
+
+        assert_eq!(vms.get("18"), Some(&"win-214 [maintenance]".to_string()));
+        assert_eq!(vms.get("22"), Some(&"win-205".to_string()));
+        assert_eq!(vms.get("30"), Some(&"test-server-01".to_string()));
+    }
+
+    #[test]
+    fn test_is_target_vm() {
+        // Normal target VM in range (201..=226)
+        assert!(is_target_vm("win-205"));
+        assert!(is_target_vm("win-201"));
+        assert!(is_target_vm("win-226"));
+
+        // Maintenance tag in name should be excluded
+        assert!(!is_target_vm("win-214 [maintenance]"));
+        assert!(!is_target_vm("win-205 maintenance"));
+        assert!(!is_target_vm("win-201 Maintenance"));
+
+        // Out of target range or non-matching prefix
+        assert!(!is_target_vm("win-100"));
+        assert!(!is_target_vm("win-250"));
+        assert!(!is_target_vm("ubuntu-205"));
+    }
+}
+
